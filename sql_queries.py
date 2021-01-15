@@ -4,12 +4,6 @@ import configparser
 # CONFIG
 config = configparser.ConfigParser()
 config.read('dwh.cfg')
-LOG_DATA = config.get("S3","LOG_DATA")
-SONG_DATA = config.get("S3","SONG_DATA")
-LOG_PATH = config.get("S3","LOG_JSONPATH")
-PUBLIC = config.get('IAM_ROLE','KEY')
-SECRET = config.get('IAM_ROLE','SECRET')
-
 
 # DROP TABLES
 
@@ -132,23 +126,18 @@ diststyle even
 
 # STAGING TABLES
 
-staging_events_copy = ("""
-copy staging_events from {}
-credentials 'aws_access_key_id = {} aws_secret_access_key = {}'
-JSON {};
-""").format(LOG_DATA,PUBLIC,SECRET,LOG_PATH)
+staging_events_copy = (""" COPY staging_events FROM {} iam_role {} FORMAT AS json {};
+""").format(config['S3']['LOG_DATA'],config['IAM_ROLE']['ARN'],config['S3']['LOG_JSONPATH'])
 
-staging_songs_copy = ("""
-copy staging_songs from {}
-credentials 'aws_access_key_id = {} aws_secret_access_key = {}';
-""").format(SONG_DATA,PUBLIC,SECRET)
+staging_songs_copy = ("""COPY staging_songs FROM {} iam_role {} FORMAT AS json 'auto';
+""").format(config['S3']['SONG_DATA'],config['IAM_ROLE']['ARN'])
 
 # FINAL TABLES
 
 songplay_table_insert = ("""
 insert into songplays (start_time, user_id, level, song_id, artist_id, session_id, location, user_agent)
-select timestamp 'epoch' + e.ts::bigint / 1000 * interval '1 second' as start_time,
-       cast(e.userId as integer) as userId,
+select timestamp 'epoch' + se.ts::bigint / 1000 * interval '1 second' as start_time,
+       cast(se.userId as integer) as userId,
        se.level,
        se.song_id,
        se.artist_id,
