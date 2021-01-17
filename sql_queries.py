@@ -33,10 +33,10 @@ create table staging_events(
     registration varchar,
     sessionId integer,
     song varchar,
-    status varchar,
-    ts varchar,
+    status integer,
+    ts bigint,
     userAgent varchar,
-    userId varchar
+    userId integer
 )
 diststyle auto
 """)
@@ -63,9 +63,9 @@ create table songplays(
     songplay_id integer identity(0,1) not null,
     start_time timestamp not null,
     user_id integer not null,
-    level varchar not null, 
-    song_id varchar,
-    artist_id varchar, 
+    level varchar, 
+    song_id varchar not null,
+    artist_id varchar not null, 
     session_id integer,
     location varchar, 
     user_agent varchar  
@@ -77,11 +77,11 @@ sortkey(start_time)
 user_table_create = ("""
 create table users(
     primary key(user_id),
-    user_id integer,
+    user_id integer not null,
     first_name varchar,
     last_name varchar,
     gender varchar, 
-    level varchar
+    level varchar not null
 )
 diststyle all
 """)
@@ -89,11 +89,11 @@ diststyle all
 song_table_create = ("""
 create table songs(
     primary key(song_id),
-    song_id varchar,
+    song_id varchar not null,
     title varchar,
     artist_id varchar,
     year integer,
-    duration float
+    duration float not null
 )
 distkey(song_id)
 """)
@@ -101,7 +101,7 @@ distkey(song_id)
 artist_table_create = ("""
 create table artists(
     primary key(artist_id),
-    artist_id varchar,
+    artist_id varchar not null,
     name varchar,
     location varchar,
     lattitude float,
@@ -113,7 +113,7 @@ diststyle even
 time_table_create = ("""
 create table times(
     primary key(start_time),
-    start_time timestamp,
+    start_time timestamp not null,
     hour smallint, 
     day smallint,
     week smallint,
@@ -153,18 +153,21 @@ user_table_insert = ("""
 insert into users (user_id, first_name, last_name, gender, level) 
 select cast(userId as integer) as userId,firstName,lastName,gender,level
 from staging_events
+group by userId
 """)
 
 song_table_insert = ("""
 insert into songs (song_id, title, artist_id, year, duration)
 select song_id,title,artist_id,year,duration
 from staging_songs
+group by song_id
 """)
 
 artist_table_insert = ("""
 insert into artists(artist_id,name,location,lattitude,longitude)
 select artist_id,artist_name,artist_location,artist_lattitude,artist_longitude
 from staging_songs
+group by artist_id
 """)
 
 time_table_insert = ("""
@@ -181,6 +184,7 @@ from
   select distinct timestamp 'epoch' + ts::bigint / 1000 * interval '1 second' as start_time
   from staging_events
 ) event;
+group by start_time
 
 """)
 
