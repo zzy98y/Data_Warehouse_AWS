@@ -72,3 +72,14 @@ artist_id, name, location, lattitude, longitude
 * time - timestamps of records in songplays broken down into specific units<br/>
 start_time, hour, day, week, month, year, weekday
 
+![schema](schema.jpg)
+
+## Instructions
+If you have your IAM Role and Redshift created in the AWS, you can create the table and go through ETL process using the following command in the terminal: 
+
+```
+python3 create_tables.py 
+python3 etl.py
+```
+
+All the data would be transformed and loaded onto the Redshift you created on AWS.
