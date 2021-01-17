@@ -53,3 +53,22 @@ The log files are partitioned by year and month. For example, here are filepaths
 
 And below is an example of what the data in a log file, 2018-11-12-events.json, looks like.
 
+![data-img](log-data.png)
+
+## End Goal 
+The data from Staging tables are loaded into a new Redshift datawarehouse named as dwh which is modeled based on star schema design. This includes the following tables.
+
+**Fact Table**
+songplays - records in log data associated with song plays i.e. records with page NextSong
+songplay_id, start_time, user_id, level, song_id, artist_id, session_id, location, user_agent
+
+**Dimension Tables**
+* users - users in the app<br/>
+user_id, first_name, last_name, gender, level
+* songs - songs in music database<br/>
+song_id, title, artist_id, year, duration
+* artists - artists in music database<br/>
+artist_id, name, location, lattitude, longitude
+* time - timestamps of records in songplays broken down into specific units<br/>
+start_time, hour, day, week, month, year, weekday
+
