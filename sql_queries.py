@@ -136,7 +136,8 @@ staging_songs_copy = ("""COPY staging_songs FROM {} iam_role {} FORMAT AS json '
 
 songplay_table_insert = ("""
 insert into songplays (start_time, user_id, level, song_id, artist_id, session_id, location, user_agent)
-select timestamp 'epoch' + se.ts::bigint / 1000 * interval '1 second' as start_time,
+select distinct 
+       timestamp 'epoch' + se.ts::bigint / 1000 * interval '1 second' as start_time,
        cast(se.userId as integer) as userId,
        se.level,
        se.song_id,
@@ -151,28 +152,29 @@ where se.page = 'NextSong';
 
 user_table_insert = ("""
 insert into users (user_id, first_name, last_name, gender, level) 
-select cast(userId as integer) as userId,firstName,lastName,gender,level
+select distinct cast(userId as integer) as userId,firstName,lastName,gender,level
 from staging_events
 group by userId
 """)
 
 song_table_insert = ("""
 insert into songs (song_id, title, artist_id, year, duration)
-select song_id,title,artist_id,year,duration
+select distinct song_id,title,artist_id,year,duration
 from staging_songs
 group by song_id
 """)
 
 artist_table_insert = ("""
 insert into artists(artist_id,name,location,lattitude,longitude)
-select artist_id,artist_name,artist_location,artist_lattitude,artist_longitude
+select distinct artist_id,artist_name,artist_location,artist_lattitude,artist_longitude
 from staging_songs
 group by artist_id
 """)
 
 time_table_insert = ("""
 insert into time (start_time, hour, day, week, month, year, weekday)
-select start_time,
+select distinct 
+start_time,
 extract('hour' from start_time) as hour,
 extract('day' from start_time) as day,
 extract('week' from start_time) as week,
